@@ -2,6 +2,8 @@
 
 A minimal IPTV streaming desktop app built with [Electrobun](https://electrobun.dev), React, Tailwind CSS, and [Effect](https://effect.website).
 
+<img width="1392" height="872" alt="CleanShot 2026-06-14 at 09 09 26" src="https://github.com/user-attachments/assets/eaf0db22-d199-4363-9af7-bd597537b90f" />
+
 ## Features
 
 - Add and manage M3U playlists (persisted in SQLite)
