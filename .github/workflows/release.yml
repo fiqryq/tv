@@ -81,7 +81,7 @@ jobs:
 
       - name: Build app (macOS)
         if: runner.os == 'macOS'
-        run: bun x electrobun build --env=prod
+        run: bun x electrobun build --env=canary
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
@@ -90,10 +90,13 @@ jobs:
 
       - name: Build app (Windows)
         if: runner.os == 'Windows'
-        run: bun x electrobun build --env=prod
+        run: bun x electrobun build --env=canary
         env:
           WIN_CERTIFICATE_PATH: certificate.pfx
           WIN_CERTIFICATE_PASSWORD: ${{ secrets.WIN_CERTIFICATE_PASSWORD }}
+
+      - name: List artifacts
+        run: ls -la artifacts/ || echo "artifacts/ not found"
 
       # ── Upload artifacts to the GitHub release ─────────────────────────────
       - name: Upload artifacts

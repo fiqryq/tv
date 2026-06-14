@@ -22,12 +22,9 @@ npm-debug.log*
 bun-debug.log*
 
 # Environment
-.env
-.env.local
 .env.*.local
 
 # Editor
-.vscode/
 .idea/
 *.swp
 *.swo
@@ -39,3 +36,4 @@ bun-debug.log*
 *.pem
 *.cer
 certificate.*
+config.bat
