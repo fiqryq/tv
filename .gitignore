@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+build/
+dist/
+artifacts/
+
+# Claude
+.claude/
+
+# TypeScript
+*.tsbuildinfo
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+bun-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+
+# Certificates (never commit these)
+*.p12
+*.pfx
+*.pem
+*.cer
+certificate.*

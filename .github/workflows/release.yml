@@ -1,0 +1,105 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14
+            arch: arm64
+            platform: macOS
+          - os: macos-13
+            arch: x64
+            platform: macOS
+          - os: windows-latest
+            arch: x64
+            platform: Windows
+
+    runs-on: ${{ matrix.os }}
+    name: Build ${{ matrix.platform }} ${{ matrix.arch }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      # ── macOS code signing (optional) ─────────────────────────────────────
+      # Secrets needed (GitHub → Settings → Secrets → Actions):
+      #   APPLE_CERTIFICATE          Base64-encoded .p12 export of your cert
+      #   APPLE_CERTIFICATE_PASSWORD Password for the .p12 file
+      #   APPLE_TEAM_ID              10-character Team ID from developer.apple.com
+      #   APPLE_SIGNING_IDENTITY     "Developer ID Application: Name (TEAMID)"
+      #   APPLE_ID                   Apple ID email  (notarization only)
+      #   APPLE_APP_PASSWORD         App-specific password (notarization only)
+      - name: Import macOS signing certificate
+        if: runner.os == 'macOS' && env.APPLE_CERTIFICATE != ''
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          echo "$APPLE_CERTIFICATE" | base64 --decode > certificate.p12
+          security create-keychain -p "" build.keychain
+          security import certificate.p12 -k build.keychain \
+            -P "$APPLE_CERTIFICATE_PASSWORD" \
+            -T /usr/bin/codesign
+          security list-keychain -d user -s build.keychain
+          security set-keychain-settings -t 3600 -u build.keychain
+          security unlock-keychain -p "" build.keychain
+          security set-key-partition-list \
+            -S apple-tool:,apple: -s -k "" build.keychain
+          rm certificate.p12
+
+      # ── Windows code signing (optional) ───────────────────────────────────
+      # Secrets needed:
+      #   WIN_CERTIFICATE            Base64-encoded .pfx file
+      #   WIN_CERTIFICATE_PASSWORD   Password for the .pfx file
+      - name: Import Windows signing certificate
+        if: runner.os == 'Windows' && env.WIN_CERTIFICATE != ''
+        env:
+          WIN_CERTIFICATE: ${{ secrets.WIN_CERTIFICATE }}
+          WIN_CERTIFICATE_PASSWORD: ${{ secrets.WIN_CERTIFICATE_PASSWORD }}
+        shell: pwsh
+        run: |
+          $cert = [Convert]::FromBase64String($env:WIN_CERTIFICATE)
+          [IO.File]::WriteAllBytes("certificate.pfx", $cert)
+
+      # ── Build ──────────────────────────────────────────────────────────────
+      - name: Build frontend
+        run: bun x vite build
+
+      - name: Build app (macOS)
+        if: runner.os == 'macOS'
+        run: bun x electrobun build
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+
+      - name: Build app (Windows)
+        if: runner.os == 'Windows'
+        run: bun x electrobun build
+        env:
+          WIN_CERTIFICATE_PATH: certificate.pfx
+          WIN_CERTIFICATE_PASSWORD: ${{ secrets.WIN_CERTIFICATE_PASSWORD }}
+
+      # ── Upload artifacts to the GitHub release ─────────────────────────────
+      - name: Upload artifacts
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**

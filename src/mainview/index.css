@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*,
+::before,
+::after {
+	border: none;
+	box-sizing: border-box;
+}
+
+input,
+button,
+textarea,
+select {
+	appearance: none;
+	-webkit-appearance: none;
+	outline: none;
+	border: none;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+	height: 100%;
+	width: 100%;
+	overflow: hidden;
+	background: #000;
+}
+
+#root {
+	position: fixed;
+	inset: 0;
+	overflow: hidden;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+	display: none;
+}
+.no-scrollbar {
+	-ms-overflow-style: none;
+	scrollbar-width: none;
+}
